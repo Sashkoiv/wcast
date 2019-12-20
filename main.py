@@ -1,31 +1,20 @@
-import requests
-import re
-from pprint import pprint as print
+from machine import Pin, I2C
+from time import sleep
+import display
+from sinoptik import Sinoptik
 
-class Sinoptik:
-    '''
-    Receives html of sinoptik.ua weather forecast service page and looking for
-    a raw data.
-    Input parameters and formatting:
-    city - cyrilic name of the city
-    ten_days - False for 7 days and True for 10 days
-    date - date in format yyyy-mm-dd
-    '''
-    def __init__(self,
-                 city: str='київ',
-                 ten_days: bool=False,
-                 date: tuple=(None, None, None)):
 
-        self.address = f'https://ua.sinoptik.ua/погода-{city.lower()}/\
-{date if date[0] else "10-днів" if ten_days else ""}'
-
-    @property
-    def forecast(self) -> list:
-        r = requests.get(self.address).text
-        exp = r"""<p class="date \w*">(\d*)<\/p>\s*<p class="month">(\w*)<\/p> <div class="weatherIco d\d\d\d" title="([\w,\s]*)"><img class="weatherImg"\ssrc.{,100}temperature">\s<div class="min">\w+\.\s<span>([-+]?[\d]*)&deg;<\/span><\/div>\s<div class="max">\w+\..<span>([-+]?[\d]*)&deg;<\/span><\/div>"""
-        matches = re.findall(exp, r, re.MULTILINE)
-        return matches
-
+i2c = I2C(-1, scl=Pin(22), sda=Pin(21))
+oled = display.SSD1306_I2C(128, 64, i2c)
 
 weather = Sinoptik()
-print(weather.forecast)
+data = weather.forecast
+
+oled.fill(0)
+oled.text(data[1][0], 0, 0)
+oled.text(data[1][1], 0, 10)
+oled.text(data[1][2], 0, 20)
+oled.text('{} Celsius'.format(data[1][3]), 0, 30)
+oled.text('{} Celsius'.format(data[1][4]), 0, 40)
+
+oled.show()
