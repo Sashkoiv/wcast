@@ -1,25 +1,11 @@
 import requests
-from html.parser import HTMLParser
+import re
+from pprint import pprint as print
 
-html_string = requests.get('https://ua.sinoptik.ua/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0-%D0%BA%D0%B8%D1%97%D0%B2/10-%D0%B4%D0%BD%D1%96%D0%B2').text
+r = requests.get('https://ua.sinoptik.ua/погода-київ/10-днів').text
 
+exp = r"""<p class="date \w*">(\d*)<\/p>\s*<p class="month">(\w*)<\/p> <div class="weatherIco d\d\d\d" title="([\w,\s]*)"><img class="weatherImg"\ssrc.{,100}temperature">\s<div class="min">\w+\.\s<span>([-+]?[\d]*)&deg;<\/span><\/div>\s<div class="max">\w+\..<span>([-+]?[\d]*)&deg;<\/span><\/div>"""
 
-class Parser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.in_p = []
+matches = re.findall(exp, r, re.MULTILINE)
 
-    def handle_starttag(self, tag, attrs):
-        if (tag == 'p'):
-            self.in_p.append(tag)
-
-    def handle_endtag(self, tag):
-        if (tag == 'p'):
-            self.in_p.pop()
-
-    def handle_data(self, data):
-        if self.in_p:
-            print("<p> data :", data)
-
-parser = Parser()
-parser.feed(html_string)
+print(matches)
